@@ -1,7 +1,7 @@
 import random
 
+# Registro de contas
 numero_contas_existentes = set()
-
 
 def gerar_numero_conta():
     while True:
@@ -22,18 +22,11 @@ class ContaCorrente:
     def validar_senha(self, senha):
         return self.__senha == senha
 
-    def set_senha(self, nova_senha):
-        if len(str(nova_senha)) == 4 and str(nova_senha).isdigit():
-            self.__senha = nova_senha
-            print("Senha alterada com sucesso!")
-        else:
-            print("A nova senha deve ter exatamente 4 dígitos numéricos.")
+    def alterar_saldo_corrente(self, valor):
+        self.__saldo_corrente += valor
 
     def get_saldo_corrente(self):
         return self.__saldo_corrente
-
-    def alterar_saldo_corrente(self, valor):
-        self.__saldo_corrente += valor
 
     def depositar(self, valor):
         if valor >= 10.0:
@@ -42,20 +35,14 @@ class ContaCorrente:
         else:
             print("O depósito deve ser no mínimo R$ 10,00.")
 
-    def sacar(self, senha, valor):
-        if not self.validar_senha(senha):
-            print("Senha incorreta. Não foi possível realizar o saque.")
-            return
+    def sacar(self, valor):
         if valor > self.__saldo_corrente:
             print("Saldo insuficiente.")
         else:
             self.alterar_saldo_corrente(-valor)
             print(f"Saque de R$ {valor:.2f} realizado com sucesso!")
 
-    def aplicar(self, senha, conta_poupanca, valor):
-        if not self.validar_senha(senha):
-            print("Senha incorreta. Não foi possível realizar a aplicação.")
-            return
+    def aplicar(self, conta_poupanca, valor):
         if valor > self.__saldo_corrente:
             print("Saldo insuficiente para aplicação.")
         else:
@@ -69,33 +56,11 @@ class ContaPoupanca:
         self.nome_titular = nome_titular
         self.__saldo_poupanca = 0.0
 
-    def get_saldo_poupanca(self):
-        return self.__saldo_poupanca
-
     def alterar_saldo_poupanca(self, valor):
         self.__saldo_poupanca += valor
 
-    def resgatar(self, senha, conta_corrente, valor):
-        if not conta_corrente.validar_senha(senha):
-            print("Senha incorreta. Não foi possível realizar o resgate.")
-            return
-        if valor > self.__saldo_poupanca:
-            print("Saldo insuficiente na poupança.")
-        else:
-            self.alterar_saldo_poupanca(-valor)
-            conta_corrente.alterar_saldo_corrente(valor)
-            print(f"Resgate de R$ {valor:.2f} da poupança realizado com sucesso!")
-
-    def extrato(self, senha, conta_corrente):
-        if not conta_corrente.validar_senha(senha):
-            print("Senha incorreta. Não foi possível exibir o extrato.")
-            return
-        print("\n=== Extrato ===")
-        print(f"Titular: {conta_corrente.nome_titular}")
-        print(f"Conta: {conta_corrente.numero_conta}")
-        print(f"Saldo Conta Corrente: R$ {conta_corrente.get_saldo_corrente():.2f}")
-        print(f"Saldo Poupança: R$ {self.get_saldo_poupanca():.2f}")
-        print("================")
+    def get_saldo_poupanca(self):
+        return self.__saldo_poupanca
 
 
 def input_float(mensagem):
@@ -141,6 +106,24 @@ def criar_conta():
             print("O depósito inicial deve ser no mínimo R$ 10,00.")
 
 
+def autenticar(conta):
+    if conta.bloqueada:
+        print("Conta bloqueada. Vá até uma agência para realizar o desbloqueio.")
+        return False
+
+    tentativas = 3
+    while tentativas > 0:
+        senha = input_int("Digite sua senha: ")
+        if conta.validar_senha(senha):
+            return True
+        else:
+            tentativas -= 1
+            print(f"Senha incorreta. Tentativas restantes: {tentativas}")
+    conta.bloqueada = True
+    print("Conta bloqueada. Vá até uma agência para realizar o desbloqueio.")
+    return False
+
+
 def menu():
     conta_corrente, conta_poupanca = criar_conta()
 
@@ -151,7 +134,7 @@ def menu():
         print("3. Aplicar para Poupança")
         print("4. Resgatar da Poupança")
         print("5. Extrato")
-        print("6. Alterar Senha")
+        print("6. Abrir nova conta")
         print("7. Sair")
 
         opcao = input_int("Escolha uma opção: ")
@@ -161,27 +144,36 @@ def menu():
             conta_corrente.depositar(valor)
 
         elif opcao == 2:
-            senha = input_int("Digite sua senha: ")
-            valor = input_float("Digite o valor a sacar: ")
-            conta_corrente.sacar(senha, valor)
+            if autenticar(conta_corrente):
+                valor = input_float("Digite o valor a sacar: ")
+                conta_corrente.sacar(valor)
 
         elif opcao == 3:
-            senha = input_int("Digite sua senha: ")
-            valor = input_float("Digite o valor a aplicar para poupança: ")
-            conta_corrente.aplicar(senha, conta_poupanca, valor)
+            if autenticar(conta_corrente):
+                valor = input_float("Digite o valor a aplicar para poupança: ")
+                conta_corrente.aplicar(conta_poupanca, valor)
 
         elif opcao == 4:
-            senha = input_int("Digite sua senha: ")
-            valor = input_float("Digite o valor a resgatar da poupança: ")
-            conta_poupanca.resgatar(senha, conta_corrente, valor)
+            if autenticar(conta_corrente):
+                valor = input_float("Digite o valor a resgatar da poupança: ")
+                if valor <= conta_poupanca.get_saldo_poupanca():
+                    conta_poupanca.alterar_saldo_poupanca(-valor)
+                    conta_corrente.alterar_saldo_corrente(valor)
+                    print(f"Resgate de R$ {valor:.2f} da poupança realizado com sucesso!")
+                else:
+                    print("Saldo insuficiente na poupança.")
 
         elif opcao == 5:
-            senha = input_int("Digite sua senha: ")
-            conta_poupanca.extrato(senha, conta_corrente)
+            print("\n=== Extrato ===")
+            print(f"Titular: {conta_corrente.nome_titular}")
+            print(f"Número da Conta: {conta_corrente.numero_conta}")
+            print(f"Saldo Conta Corrente: R$ {conta_corrente.get_saldo_corrente():.2f}")
+            print(f"Saldo Conta Poupança: R$ {conta_poupanca.get_saldo_poupanca():.2f}")
+            print("================")
 
         elif opcao == 6:
-            nova_senha = input_int("Digite a nova senha (4 dígitos): ")
-            conta_corrente.set_senha(nova_senha)
+            print("Abrindo uma nova conta...")
+            conta_corrente, conta_poupanca = criar_conta()
 
         elif opcao == 7:
             print("Saindo...")
