@@ -19,14 +19,33 @@ class ContaCorrente:
         self.__saldo_corrente = 0.0
         self.bloqueada = False
 
+    # Métodos get e set para senha
+    def get_senha(self):
+        return "Senha protegida. Não pode ser acessada diretamente."
+
+    def set_senha(self, senha_antiga, nova_senha):
+        if self.__senha == senha_antiga:
+            if len(str(nova_senha)) == 4 and str(nova_senha).isdigit():
+                self.__senha = nova_senha
+                print("Senha alterada com sucesso!")
+            else:
+                print("Nova senha inválida. Deve ser numérica e ter 4 dígitos.")
+        else:
+            print("Senha antiga incorreta.")
+
+    # Método para validar a senha (já existia)
     def validar_senha(self, senha):
         return self.__senha == senha
 
-    def alterar_saldo_corrente(self, valor):
-        self.__saldo_corrente += valor
-
+    # Métodos get e set para saldo
     def get_saldo_corrente(self):
         return self.__saldo_corrente
+
+    def set_saldo_corrente(self, valor):
+        self.__saldo_corrente = valor
+
+    def alterar_saldo_corrente(self, valor):
+        self.__saldo_corrente += valor
 
     def depositar(self, valor):
         if valor >= 10.0:
@@ -62,7 +81,11 @@ class ContaPoupanca:
     def get_saldo_poupanca(self):
         return self.__saldo_poupanca
 
+    def set_saldo_poupanca(self, valor):
+        self.__saldo_poupanca = valor
 
+
+# Funções utilitárias para entradas
 def input_float(mensagem):
     while True:
         try:
@@ -83,6 +106,7 @@ def input_int(mensagem):
             print("Entrada inválida. Digite um número inteiro.")
 
 
+# Função para criar conta
 def criar_conta():
     nome = input("Digite o nome completo do titular: ")
     while True:
@@ -106,6 +130,7 @@ def criar_conta():
             print("O depósito inicial deve ser no mínimo R$ 10,00.")
 
 
+# Função para autenticar o usuário
 def autenticar(conta):
     if conta.bloqueada:
         print("Conta bloqueada. Vá até uma agência para realizar o desbloqueio.")
@@ -124,6 +149,7 @@ def autenticar(conta):
     return False
 
 
+# Menu principal
 def menu():
     conta_corrente, conta_poupanca = criar_conta()
 
@@ -134,8 +160,9 @@ def menu():
         print("3. Aplicar para Poupança")
         print("4. Resgatar da Poupança")
         print("5. Extrato")
-        print("6. Abrir nova conta")
-        print("7. Sair")
+        print("6. Alterar Senha")
+        print("7. Abrir nova conta")
+        print("8. Sair")
 
         opcao = input_int("Escolha uma opção: ")
 
@@ -172,10 +199,16 @@ def menu():
             print("================")
 
         elif opcao == 6:
+            if autenticar(conta_corrente):
+                senha_antiga = input_int("Digite sua senha antiga: ")
+                nova_senha = input_int("Digite sua nova senha de 4 dígitos: ")
+                conta_corrente.set_senha(senha_antiga, nova_senha)
+
+        elif opcao == 7:
             print("Abrindo uma nova conta...")
             conta_corrente, conta_poupanca = criar_conta()
 
-        elif opcao == 7:
+        elif opcao == 8:
             print("Saindo...")
             break
 
