@@ -1,6 +1,5 @@
 import random
 
-# Registro de contas
 numero_contas_existentes = set()
 
 
